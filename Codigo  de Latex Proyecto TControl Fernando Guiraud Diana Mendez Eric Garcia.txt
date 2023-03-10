@@ -1,0 +1,933 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Modelado y análisis de sistema de control de elevador\\
+}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Fernando Guiraud}
+\IEEEauthorblockA{\textit{Facultad de Ingeniería Eléctrica} \\
+\textit{Universidad Tecnológica de Panamá}\\
+Panamá, Panamá \\
+fernando.guiraud@utp.ac.pa}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Diana Méndez}
+\IEEEauthorblockA{\textit{Facultad de Ingeniería Eléctrica} \\
+\textit{Universidad Tecnológica de Panamá}\\
+Panamá, Panamá \\
+diana.mendez@utp.ac.pa}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Eric García}
+\IEEEauthorblockA{\textit{Facultad de Ingeniería Eléctrica} \\
+\textit{Universidad Tecnológica de Panamá}\\
+Panamá, Panamá \\
+eric.garcia2@utp.ac.pa}
+}
+
+\maketitle
+
+\begin{abstract}
+En este articulo presentamos la solución al problema del dueño de un edificio en construcción que desea instalar un elevador. Mediante la guía del problema 2.8 Electromechanical System Transfer Functions (pag.79) donde explican el análisis eléctrico y electrónico de un motor se procedió al análisis del sistema eléctrico y electrónico que conlleva la instalación de un elevador, dentro de un edificio de once pisos mas planta baja. El objetivo de este documento es presentar como se da la relación de un sistema que se divide en dos partes: eléctrica y mecánica mediante el uso de la Teoría de Control, basándonos primero en el análisis separado de cada sistema, correlacionando las ecuaciones dadas y utilizando una data proporcionada, la cual se filtró mediante el software Matlab para así obtener la velocidad lineal del motor y a partir de esta obtener la función de transferencia que modela el movimiento del elevador, donde se presenta que es un sistema de segundo orden, el cual se analiza bajo distintos parámetros como cantidad de personas en el, si se encuentra en lazo abierto o cerrado y como esto afecta la estabilidad del sistema.
+Además de crearle un controlador mediante la implantación de lugar geométrico de las raíces para adaptarse a las necesidades propuestas.
+ 
+\end{abstract}
+
+\begin{IEEEkeywords}
+Amortiguamiento, engranajes, elevador, armadura, sistema electromecánico, lugar geométrico, Matlab, controlador. 
+\end{IEEEkeywords}
+
+\section{Introducción}
+
+Según la teoría del control, un proceso o sistema está formado por un conjunto de elementos relacionados entre sí que ofrecen señales de salida (realimentación) en función de señales o datos de entrada (referencia). El control de un sistema se lleva a cabo, mediante un conjunto de elementos mecánicos, hidráulicos, eléctricos y/o electrónicos conectados unos con los otros, que recogen información acerca de un determinado funcionamiento. La variable de entrada es una variable operativa tal que; una modificación de su intensidad o condición puede modificar el estado del sistema. La variable de salida es una variable operativa cuya intensidad o condición puede medirse. Una perturbación, es una señal que tiende a afectar el valor de la salida en un sistema; si se produce dentro el sistema se le denomina “perturbación interna”, mientras que la externa se produce obviamente fuera del sistema y viene a ser una entrada. Los sistemas de control son un conjunto de dispositivos que actúan en conjunto para lograr el control deseado [1].
+Un ascensor al ser un sistema de transporte vertical, diseñado para mover personas u objetos entre los diferentes niveles de un edificio o estructura. Está formado por partes mecánicas, eléctricas y electrónicas que funcionan en conjunto para ponerlo en marcha [2]. El objetivo de este articulo es presentar como se puede analizar, crear el controlador de un elevador mediante el uso de teoría de control. 
+
+
+
+\section{Planteamiento del Problema}
+
+El dueño de un edificio en construcción de 11 pisos más planta baja, ha decidido instalar un elevador para el transporte exclusivo de personas y el esquemático del sistema se muestra a continuación:
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=1.2]{Sistema.png}}
+	\caption{Sistema de ascensor propuesto.}
+	\label{fig}
+\end{figure}
+
+Se conoce que cada piso tiene una altura alrededor de 3 metros y que el elevador tiene una capacidad de hasta 10 personas.
+
+Los datos eléctricos y mecánicos son:
+
+\begin{itemize}
+	
+\item La caja de engranes consiste en 2 engranes rectos (forma cilíndrica), en donde el engrane de alta velocidad tiene un peso de 1962 $N$, diámetro de 30 $cm$ y 100 dientes; el engrane de baja velocidad tiene un peso de 3924 $N$, diámetro de 70 $cm$ y 200 dientes. 
+	
+	\item Las pruebas eléctricas presentadas sobre el motor demostraron que posee una resistencia de armadura de 0.1144 Ohm, constante de torque de 0.4 $N \cdot m/A$, inductancia de 0.35$H$ y constante de fuerza contraelectromotriz de 3.71 $V \cdot s/rad$. Por otro lado, se sabe que la armadura tiene forma cilíndrica, peso de 1962 $N$ y diámetro de 60 $cm$.
+	
+	\item El tambor es el elemento que sirve de polea donde se enrolla el cable. Tiene un peso de 4905 $N$ y diámetro de 75 $cm$.
+	
+	\item Se sabe que el torque de oposición en los rodamientos es despreciable.
+	
+	\item La caja del elevador tiene un peso de 2452.5 $N$. También se debe tomar en cuenta el efecto de la fricción viscosa en la caja del elevador debido al aire, para el correcto funcionamiento del sistema de control. Este dato no es conocido actualmente.
+	
+	\item Se recogió una serie de datos al medir la velocidad del motor en función del tiempo, con el elevador vacío. Estos datos se encuentran adjuntos en el documento llamado Data.xlsx. La primera columna representa al tiempo de cada medición en segundos, la segunda columna es la posición en metros, mientras que la tercera es la entrada de voltaje al motor en volt.
+	
+	\item El ascensor debería alcanzar el primer piso en 5 segundos, con 6 personas dentro de la cabina. Suponga que el peso promedio de una persona corresponde a los 2 últimos términos no nulos de su cédula.
+	
+\end{itemize}
+
+ Deberá:
+ 
+\begin{itemize}
+	
+	\item Escoger un modelo matemático que convenga para este sistema. 
+	
+	\item Indicar cuál es el coeficiente de fricción del aire bajo las condiciones del proyecto.
+	
+	\item Realizar una gráfica (en un mismo plano) de las respuestas en lazo abierto para el sistema ante un diverso número de personas en el ascensor.
+	
+	\item Realizar un análisis de la estabilidad en lazo cerrado, considerando un sensor ideal.
+	
+	\item Diseñar un controlador que se adapte a las necesidades del proyecto, mediante el método del lugar geométrico de las raíces. 
+	
+	
+\end{itemize}
+
+
+\section{Estado del arte}
+
+\subsection{Funciones de Transferencia de Sistemas Electromecánicos}
+
+Un motor es un componente electromecánico que produce una salida de desplazamiento para una entrada de voltaje, es decir, una salida mecánica generada por una entrada eléctrica. Deduciremos la función de transferencia para una clase particular de sistema electromecánico, que es el servomotor cd controlado por armadura.
+ 
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.9]{elect.png}}
+	\caption{Esquemático del motor DC}
+	\label{fig}
+\end{figure}
+
+En la figura (2) se ilustra el diagrama esquemático del motor, los imanes permanentes estacionarios o electro imanes estacionarios, generan un campo magnético llamado campo fijo. Un circuito giratorio llamado armadura, por el que circula una corriente $i_{a}(t)$, pasa por este campo magnético y $l$, la longitud del conductor. El par resultante hace girar al rotor, que es el elemento giratorio del motor.
+
+Hay otro fenómeno que ocurre en el motor: un conductor que se mueve a ángulos rectos respecto de un campo magnético genera un voltaje, en los terminales del conductor, igual a $e=Blv$, donde e es el voltaje y v, la velocidad del conductor normal al campo magnético. Puesto que la armadura portadora de corriente está girando en un campo magnético, su voltaje es proporcional a la velocidad. Entonces,
+
+\begin{equation}
+	v_{b}(t) = K_{b}\cdot \frac{\mathrm{d\theta_{m}(t) } }{\mathrm{d} t}
+	\label{eq}
+\end{equation}
+
+A $v_{b}(t)$ se le da el nombre de fuerza contraelectromotriz (contra fem); $K_{b}$ es una constante de proporcionalidad llamada constante de contra fem; y $d\theta_{m}(t) /dt = \omega_{M}(t)$ es la velocidad angular del motor. Tomando la transformada de Laplace, obtenemos
+\begin{equation}
+	V_{b}(s) = K_{b}\cdot s\cdot  \theta_{m}(s)
+	\label{eq}
+\end{equation}
+
+La relación entre la corriente de armadura, $i_{a}(t)$, el voltaje de armadura aplicando, $e_{a}(t)$ y la fuerza contraelectromotriz, $v_{b}(t)$, se encuentra al escribir una ecuación de malla alrededor del circuito de armadura transformado de Laplace figura (2):
+
+\begin{equation}
+	 R_{a}\cdot I_{a}(s)   + L_{a}\cdot s\cdot  I_{a}(s) +
+	V_{b}(s) = E_{a}(s) \label{eq}
+\end{equation}
+
+El par creado por el motor es proporcional a la corriente de la armadura; así,
+\begin{equation}
+	T_{m}(s) = K_{t} \cdot I_{a}(s) \label{eq}
+\end{equation}
+
+donde $T_{m}$ es el par creado por el motor y $K_{t}$ una constante de proporcionalidad, llamada constante de par del motor, que depende de las características del motor y del campo magnético. En un conjunto de unidades consistente, $K_{t}$ es igual al valor de $K_{b}$. Un re acomodo de la ecuación (4) da por resultado
+
+\begin{equation}
+	I_{a}(s) = \frac{1}{K_{t}} \cdot T_{m}(s)\label{eq}
+\end{equation}
+
+Para hallar la función de transferencia del motor, primero sustituimos las ecuaciones (2) y (4) en la (3), obteniendo 
+
+\begin{equation}
+	 \frac{(R_{a} + L_{a}\cdot s)T_{m}(s)}{K_{t}} + K_{b}\cdot s \cdot \theta_{m}(s) = E_{a}(s)\label{eq}
+\end{equation}
+
+Ahora debemos hallar $T_{m}$ en términos de $\theta_{m}(s)$ si hemos de separar las variables de entrada y salida y obtener la función de transferncia  $\theta_{m}(s)/E_{a}(s)$.
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{mload.png}}
+	\caption{Típico equivalente mecánico de la carga de un motor}
+	\label{fig}
+\end{figure}
+ 
+La figura 3 muestra una carga mecánica equivalente representativa sobre un motor. La $J_{m}$ es una inercia equivalente en la armadura e incluye el amortiguamiento viscoso de la armadura y, como veremos mas adelante, el amortiguamiento  viscoso de la carga reflejado por la armadura. De la figura (3),
+
+\begin{equation}
+	T_{m}(s) = (J_{m} \cdot s^{2} + D_{m}\cdot s ) \cdot \theta_{m}(s) \label{eq}
+\end{equation}
+
+Al sustituir la ecuación (7) en la (6), resulta
+
+\begin{equation}
+	\frac{(R_{a} + L_{a}\cdot s)(J_{m} \cdot s^{2} + D_{m}\cdot s ) \theta_{m}(s)}{K_{t}} + K_{b}\cdot s \cdot \theta_{m}(s) = E_{a}(s)\label{eq}
+\end{equation}
+
+Si suponemos que la armadura $L_{a}$, es pequeña en comparación con la resistencia de armadura $R_{a}$ lo que es usual para un motor cd, la ecuación (8) se convierte en
+
+\begin{equation}
+	\left[\frac{R_{a}}{K_{t}}(J_{m} \cdot s^{2} + D_{m}\cdot s ) + K_{b} \right]  s \cdot \theta_{m}(s) = E_{a}(s)\label{eq}
+\end{equation}
+
+Después de simplificar se encuentra que la función de transferencia deseada, $\theta_{m}(s)/E_{a}(s)$, es
+
+ \begin{equation}
+ 	\frac{\theta_{m}(s)}{E_{a}(s)} = \frac{K_{t}/(R_{a}\cdot J_{m})} {s\left[ s +  \dfrac{1}{J_{m}}\left(D_{m}+\dfrac{K_{t}\cdot K_{b}}{R_{a}} \right) \right]  }
+ 	\label{eq}
+ \end{equation}
+
+
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{rload.png}}
+	\caption{Motor de cd que mueve una carga mecánica rotacional.}
+	\label{fig}
+\end{figure}
+
+Aun cuando la forma de la ecuación (10) es relativamente sencilla, es decir,
+
+\begin{equation}
+	\frac{\theta_{m}(s)}{E_{a}(s)} =\dfrac{K}{s(s+\alpha)}  
+	\label{eq}
+\end{equation}
+
+el lector puede interesarse en la forma de evaluar las constantes.
+Estudiemos primero las constantes mecánicas $J_{m}$ y $D_{m}$. Consideremos la figura (4), que muestra un motor con inercia $J_{L}$ y el amortiguamiento que se muestra. $J_{L}$ y $D_{L}$ se pueden reflejar hacia la armadura como una inercia y amortiguamiento equivalentes para sumarse a $J_{a}$ y $D_{a}$, respectivamente. Así, la inercia equivalente, $J_{m}$ y el amortiguamiento equivalente $D_{m}$ en la armadura son [3].
+
+\begin{equation}
+	J_{m} = J_{a} + J_{L} \left( \frac{N_{1}}{N_{2}} \right) ^{2}  \label{eq}
+\end{equation}
+\begin{equation}
+	D_{m}=D_{a}+D_{L}\left(  \frac{N_{1}}{N_{2}}\right)^{2}  \label{eq}
+\end{equation}
+
+
+\section{Modelado Matemático}
+Para encontrar el modelado matemático del sistema propuesto utilizaremos las ecuaciones deducidas en la sección anterior, pero antes de hacer esto, debemos encontrar un sistema rotacional equivalente de la carga del motor como se presenta en la figura (3).
+Para lograr esto lo primero que debemos hacer es reducir el sistema mecánico generado por el elevador a su par rotacional producido.
+
+
+\begin{table}[htbp]
+	\caption{Tabla de diámetros}
+	\begin{center}
+		\begin{tabular}{| c | c |}
+			\hline
+			Elemento & Diámetro ($m$) \\ \hline
+			Engranaje 1 ($d_{E1}$)  & 0.3 \\
+			\hline
+			Engranaje 2 ($d_{E2}$) & 0.7 \\
+			\hline
+			Tambor ($d_{TA}$) & 0.75 \\ 
+			\hline
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{mec.png}}
+	\caption{Diagrama de cuerpo libre del elevador}
+	\label{fig}
+\end{figure}
+
+Analizando el diagrama de cuerpo libre de la cabina y realizando una sumatoria de las fuerzas resultantes en el cuerpo obtenemos
+
+\begin{equation}
+M\ddot{x}+f_{va}\dot{x} = F\label{eq}
+\end{equation}
+Donde $f_{va}$ es la fricción viscosa del aire sobre la cabina del elevador.
+
+Aplicando la relación de la posición angular y lineal tenemos:
+
+\begin{equation}
+x = R\cdot\theta\label{eq}
+\end{equation}
+
+Sabiendo que $M$ es la masa del elevador, podemos obtenerla por medio de su peso entre la gravedad, $R$ es el radio del tambor ademas remplazando la ecuación (15) en la (14) obtenemos la fuerza en términos angulares,
+
+
+\begin{equation}
+\frac{W_{el}\cdot d_{TA}}{2\cdot g}\ddot{\theta}+\dfrac{f_{va} \cdot d_{TA} }{2}\dot{\theta} = F\label{eq}
+	\end{equation}
+
+El peso del elevador esta definido por la suma del peso de la cabina, mas el peso de las personas que lo ocupen, este tiene una capacidad máxima de diez personas, por lo que podríamos definir una variable llamada p, que toma números enteros de cero a diez representando el peso del elevador de la siguiente forma:
+
+\begin{equation}
+W_{el} = W_{c} + p \cdot W_{p}\label{eq}
+\end{equation}
+Los valores de los pesos utilizados en este modelado se encuentran en la siguiente tabla:
+
+\begin{table}[htbp]
+	\caption{Tabla de pesos}
+	\begin{center}
+		\begin{tabular}{| c | c |}
+			\hline
+			Elemento & Peso ($N$) \\ \hline
+			Engranaje 1 ($W_{E1}$)  & 1962 \\
+			\hline
+			Engranaje 2 ($W_{E2}$) & 3924 \\
+			\hline
+			Tambor ($W_{TA}$) & 4905 \\ 
+			\hline
+			Persona ($W_{p}$)  & 902.5\\
+			\hline
+			Elevador sin carga ($W_{c}$)  & 2452.5\\
+			\hline
+			Elevador con carga ($W_{el}$)  & 902.5$ p + $2452.5\\
+			\hline
+			
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+Ahora que contamos con la representación de el elevador en términos rotacionales analizamos el par producido por esta fuerza.
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.6]{rota.png}}
+	\caption{Diagrama rotacional del tambor}
+	\label{fig}
+\end{figure}
+
+Realizando la sumatoria de los pares presentes en la figura (6), tenemos
+
+\begin{equation}
+T{_{m}^{\prime}} = J_{eq}\ddot{\theta} + D\dot{\theta} + F \cdot R \label{eq}
+\end{equation}
+
+
+
+Remplazando la ecuación (16) en (18),
+
+\begin{equation}
+T{_{m}^{\prime}} = J_{eq}\ddot{\theta} + D\dot{\theta} + \left(\frac{W_{el}\cdot d_{TA}}{2\cdot g}\ddot{\theta}+\dfrac{f_{va} \cdot d_{TA} }{2}\dot{\theta} \right)  \cdot R \label{eq}
+\end{equation}
+Donde $R$ es el radio del tambor,
+
+\begin{equation}
+T{_{m}^{\prime}} = J_{eq}\ddot{\theta} + D\dot{\theta} + \left(\frac{W_{el}\cdot d{_{TA}^{2}}}{4\cdot g}\ddot{\theta}+\dfrac{f_{va} \cdot d{_{TA}^{2}} }{4}\dot{\theta} \right) \label{eq}
+\end{equation}
+
+agrupando términos,
+
+\begin{equation}
+T{_{m}^{\prime}} = \left( J_{eq}+\frac{W_{el}\cdot d{_{TA}^{2}}}{4\cdot g}\right) \ddot{\theta} +\left(  D + \dfrac{f_{va} \cdot d{_{TA}^{2}} }{4}\right) \dot{\theta} \label{eq}
+\end{equation}
+
+donde $J_{eq}$ es la inercia equivalente del sistema sin contar la carga del peso que ya esta contemplada en el siguiente termino. Esta inercia equivalente contiene los valores de los engranajes y el tambor,
+
+ \begin{equation}
+J_{eq}=J_{E1}+ J_{E2}+ J_{TA}\label{eq}
+\end{equation}
+
+
+Estos datos agrupados corresponden la inercia y amortiguamiento de la carga,
+
+ \begin{equation}
+ J_{L}=J_{E1}+ \left( J_{E2}+ J_{TA}+\frac{W_{el}\cdot d{_{TA}^{2}}}{4\cdot g}\right) \left( \dfrac{N_{1}}{N_{2}}\right)^{2} \label{eq}
+\end{equation}
+ \begin{equation}
+  D_{L}=\left( D + \dfrac{f_{va} \cdot d{_{TA}^{2}} }{4}\right)\left( \dfrac{N_{1}}{N_{2}}\right)^{2} \label{eq}
+\end{equation}
+
+donde $D$ corresponde al amortiguamiento del tambor.
+
+\begin{table}[htbp]
+	\caption{Tabla de relación de dientes}
+	\begin{center}
+		\begin{tabular}{| c | c | c |}
+			\hline
+			Engranaje & $E1$ & $E2$ \\ \hline
+			Cantidad de dientes  & 100 & 200\\
+			\hline
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+Con los datos obtenidos anteriormente y la información de la tabla de relación de dientes remplazamos las ecuaciones (23) y (24) en (12) y (13) respectivamente.
+
+\begin{equation}
+J_{m} = J_{a} + J_{E1}+ \left( J_{E2}+ J_{TA}+\frac{W_{el}\cdot d{_{TA}^{2}}}{4\cdot g}\right)  \left( \frac{N_{1}}{N_{2}} \right) ^{2}  \label{eq}
+\end{equation}
+\begin{equation}
+D_{m}=\left( D + \dfrac{f_{va} \cdot d{_{TA}^{2}} }{4}\right)\left(  \frac{N_{1}}{N_{2}}\right)^{2}  \label{eq}
+\end{equation}
+
+La inercia del engranaje $E_{1}$ se encuentra en contacto directo con el rotor, por lo que no requiere multiplicarse por la relación de dientes de los engranajes, ademas se desprecia el amortiguamiento de la armadura del motor.
+
+Si asumimos que los engranajes, el tambor y al armadura son cilindros rectos sólidos, podemos calcular sus inercias por medio de la formula:
+
+\begin{equation}
+I=\dfrac{1}{2} \cdot m \cdot R^{2}\label{eq}
+\end{equation}
+
+Asumiendo que la el elevador esta vació, remplazando en la ecuación (17) obtenemos que el peso del elevador sera igual al peso del cajón.
+
+Obteniendo las masas dividiendo los pesos de la tabla 2, entre la gravedad, y los radios obtenidos de los diámetros proporcionados podemos llenar la siguiente tabla:
+
+\begin{table}[htbp]
+	\caption{Inercias}
+	\begin{center}
+		\begin{tabular}{| c | c |}
+			\hline
+			Elemento & Inercia ($kg \cdot m^{2}$) \\ \hline
+			Engranaje 1 ($J_{E1}$)  & 2.25 \\
+			\hline
+			Engranaje 2 ($J_{E2}$) & 24.5 \\
+			\hline
+			Tambor ($J_{TA}$) & 35.192 \\ 
+			\hline
+			Armadura ($J_{a}$)  & 9\\
+			\hline
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+Si calculamos la inercia equivalente del motor $J_{m}$ de la ecuación (25), con carga seria igual a:
+
+\begin{equation}
+J_{m} = 3.2376\cdot p +34.971\label{eq}
+\end{equation}
+
+Y sin carga:
+
+\begin{equation}
+J_{m} =34.971\label{eq}
+\end{equation}
+
+Mientras que el amortiguamiento equivalente del motor seria, dejando incógnitas como la el amortiguamiento producido por la viscosidad del aire sobre el cajón del elevador y el amortiguamiento del tambor, tenemos que:
+
+\begin{equation}
+D_{m}=\dfrac{D+f_{va}(0.75)^2}{16}\label{eq}
+\end{equation}
+
+Remplazando todos estos datos en la ecuación (10) deducida en la sección anterior tomando en cuenta la carga del elevador:
+
+ \begin{equation}
+\frac{\theta_{m}(s)}{E_{a}(s)} = \frac{\frac{0.4}{0.1144\cdot (3.2376\cdot p +34.971)}} {s\left[ s +  \dfrac{1}{(3.2376\cdot p +34.971)}\left(\dfrac{D+f_{va}(0.75)^2}{16}+\dfrac{0.4\cdot 3.71}{0.1144} \right) \right]  }
+\label{eq}
+\end{equation}
+
+Si asumimos que el elevador esta vació, obtendremos la siguiente función de transferencia:
+
+
+ \begin{equation}
+\frac{\theta_{m}(s)}{E_{a}(s)} = \frac{0.099983} {s\left[ s +  \left(\dfrac{D+0.5625\cdot f_{va}}{559.536}+0.370937\right) \right]  }
+\label{eq}
+\end{equation}
+
+Despreciando el amortiguamiento del tambor obtenemos que:
+
+ \begin{equation}
+\frac{\theta_{m}(s)}{E_{a}(s)} = \frac{0.099983} {s\left[ s +  \left(0.001005 \cdot f_{va}+0.370937\right) \right]  }
+\label{eq}
+\end{equation}
+
+Sabiendo que la posición angular y la lineal están relacionadas por medio de $x=\theta\cdot R $, podemos convertir la función de transferencia angular a lineal multiplicando por el radio del primer  engranaje donde $ R = (d_{E1}/2)=0.15 m$, el cual se asume que fue medida la velocidad lineal del motor de los datos proporcionados
+
+ \begin{equation}
+\frac{X_{m}(s)}{E_{a}(s)} = \frac{0.014997} {s\left[ s +  \left(0.001005 \cdot f_{va}+0.370937\right) \right]  }
+\label{eq}
+\end{equation}
+
+Si tomamos en cuenta la carga del elevador por persona:
+
+ \begin{equation}
+\frac{X_{m}(s)}{E_{a}(s)} = \frac{\dfrac{1.07997}{p+10.8015}} {s\left[ s +  \left(\dfrac{0.010859 \cdot f_{va}}{p+10.8015}+\dfrac{4.00668}{p+10.8015}\right) \right]  }
+\label{eq}
+\end{equation}
+
+
+
+\section{Metodología}
+
+\subsection{Filtrado de ruido en datos experimentales}
+
+Los datos experimentales de este sistema fueron proporcionados facilitados, por medio de una tabla de datos, en los cuales se presento el tiempo, la velocidad y el voltaje a medida que se desplaza el elevador sin carga, pero estos datos experimentales contenían ruido por lo que requirieron un proceso de filtrado previo a su uso.
+ 
+Para este proceso de filtrado se utilizo Matlab, en especifico el comando "medfilt1", el cual hace una media de los datos en cada punto para estimar un valor intermedio y estabilizar los datos eliminando el ruido.
+
+Primero se transfirieron los datos proporcionados de excel a Matlab para después proceder a filtrarlos por medio de las siguientes lineas de código:
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{code1.png}}
+	\caption{Código de filtrado en Matlab}
+	\label{fig}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.85]{filter.png}}
+	\caption{Gráfica de filtrado, generada por Matlab}
+	\label{fig}
+\end{figure}
+
+A partir de estos datos filtrados podemos aproximar una función de transferencia de primer orden, la cual tiene la siguiente forma:
+
+\begin{equation}
+\frac{V_{m}(s)}{E_{a}(s)} = \dfrac{K}{s+a}\label{eq}
+\end{equation}
+
+Para calcular el valor de $a$, podemos aproximar el tiempo de asentamiento, el cual se define como el tiempo necesario para que la respuesta alcance el 2 por ciento alrededor de su valor final y permanezca en este valor.
+Para encontrar este tiempo calculamos gráficamente el valor final en el que se estabiliza la respuesta y luego calculamos el 98 por ciento y aproximamos el punto en el cual la gráfica coincide con esta linea y vemos en que tiempo ha llegado a esta posición de la gráfica.
+
+Gráficamente podemos calcular que el valor final en la figura (8) es aproximadamente $42 m/s$ por lo que el 98 por ciento de $42 m/s$ es $41.16 m/s$, ahora trazamos una linea horizontal y donde sea la intersección con la gráfica de datos filtrados trazamos una linea vertical, por medio del código en la figura (9):
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{code2.png}}
+	\caption{Código de intersección para calculo de tiempo de asentamiento}
+	\label{fig}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.85]{intersec.png}}
+	\caption{Interseccion del 98 por ciento del valor final con datos filtrados para calculo de tiempo de asentamiento.}
+	\label{fig}
+\end{figure}
+
+De esta forma obtenemos un tiempo de asentamiento aproximado de $T_{s} = 10.67 s $ 
+
+La formula del tiempo de asentamiento es:
+
+\begin{equation}
+T_{s} = \dfrac{4}{a}\label{eq}
+\end{equation}
+
+Por lo tanto el valor de $a$ es igual a:
+
+\begin{equation}
+ a= \dfrac{4}{T_{s}}=\dfrac{4}{10.67}=0.37488\label{eq}
+\end{equation}
+
+Ahora que tenemos el valor de $a$ podemos aproximar el función de transferencia de primer orden a una función en el tiempo definida como:
+
+\begin{equation}
+v_{m}(t)= v_{mf}\cdot\left( 1 - e^{-a\cdot t}\right)  \label{eq}
+\end{equation}
+
+Donde $v_{mf}$ es el valor final al cual tiende la respuesta graficada a partir de los datos experimentales, el cual anteriormente aproximamos a  $42 m/s$.
+
+\begin{equation}
+v_{m}(t)= 42\cdot\left( 1 - e^{-0.37488\cdot t}\right)  \label{eq}
+\end{equation}
+
+Si utilizamos la transformada de Laplace en la ecuación (40) obtenemos
+
+\begin{equation}
+V_{m}(s)=\dfrac{15.745}{s\cdot\left(s+0.37488 \right) }\label{eq}
+\end{equation}
+
+Si sabemos que la entrada al sistema proporcionada en los datos experimentales fue de 420 Voltios, factorizamos este valor del numerador de modo que la función de transferencia de la velocidad del motor en función del voltaje, aproximada de la gráfica es:
+
+
+
+\begin{equation}
+\frac{V_{m}(s)}{E_{a}(s)} = \dfrac{0.037488}{s+0.37488}\label{eq}
+\end{equation}
+
+Ahora sabiendo que la función de transferencia de la posición por el voltaje del motor obtenida en la ecuación (34), es semejante a la función de transferencia de la velocidad, solo que disminuye el grado del denominador en uno, por lo que la $s$ que multiplica la ecuación (34), se elimina obteniendo:
+
+ \begin{equation}
+\frac{V_{m}(s)}{E_{a}(s)} = \frac{0.037494} { s +  \left(0.001005 \cdot f_{va}+0.370937\right)  }
+\label{eq}
+\end{equation}
+
+Reemplazando una entrada de 420 Voltios constantes, como se puede apreciar en los datos proporcionados, en ambas ecuaciones (38) y (39)
+
+\begin{equation}
+V_{m}(s) = \dfrac{15.7451}{s+0.37488}\label{eq}
+\end{equation}
+
+ \begin{equation}
+V_{m}(s)= \frac{15.7475} { s +  \left(0.001005 \cdot f_{va}+0.370937\right)  }
+\label{eq}
+\end{equation}
+
+por lo que si igualamos los dos valores de $a$, podemos obtener de las ecuaciones (40) y (41) 
+
+ \begin{equation}
+0.37488 = 0.001005 \cdot f_{va}+0.370937 
+\label{eq}
+\end{equation}
+
+ \begin{equation}
+f_{va} = 3.92338 
+\label{eq}
+\end{equation}
+
+Para convertir la posición lineal del motor, al desplazamiento del elevador, utilizamos la siguiente relación:
+
+\begin{equation}
+X(s)=X_{m}(s) \cdot \left(\dfrac{d_{TA}}{2}\right) \left(\dfrac{N_{1}}{N_{2}}\right)   \label{eq}
+\end{equation}
+
+\begin{equation}
+X_{el}(s)=X_{m}(s) \cdot 0.1875 \label{eq}
+\end{equation}
+
+
+Por lo tanto remplazando la en a función de transferencia de la ecuación (34) obtenemos y la relación de la ecuación (46):
+
+ \begin{equation}
+\frac{X_{el}(s)}{E_{a}(s)} = \frac{0.037494\cdot 0.1875} {s\left[ s +  \left(0.001005 \cdot 3.92338+0.370937\right) \right]  }
+\label{eq}
+\end{equation}
+
+ \begin{equation}
+\frac{X_{el}(s)}{E_{a}(s)} = \frac{0.00703} {s\left[ s +  0.37488 \right]  }
+\label{eq}
+\end{equation}
+
+Tomando en cuenta la carga por persona del elevador reemplazando $fva$ en la ecuación (35):
+
+ \begin{equation}
+\frac{X_{el}(s)}{E_{a}(s)} = \frac{\dfrac{0.075935}{p+10.8015}} {s\left[ s +  \left( \dfrac{4.04928}{p+10.8015}\right)  \right]  }
+\label{eq}
+\end{equation}
+
+Y la función de transferencia de la velocidad del elevador:
+
+ \begin{equation}
+\frac{V_{el}(s)}{E_{a}(s)} = \frac{\dfrac{0.075935}{p+10.8015}} { s +  \left( \dfrac{4.04928}{p+10.8015}\right)    }
+\label{eq}
+\end{equation}
+
+Ahora si comprobamos estos datos con la gráfica de los datos proporcionados para conocer si la respuesta calculada matemáticamente se aproxima a los datos experimentales en la figura (12). 
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{code3.png}}
+	\caption{Código para graficar la respuesta y los datos experimentales. }
+	\label{fig}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.8]{compar.png}}
+	\caption{Respuesta encontrada y datos experimentales (velocidad lineal del motor en el primer engranaje).}
+	\label{fig}
+\end{figure}
+
+\section{Simulaciones}
+
+\subsection{Respuesta en lazo abierto}
+
+Si calculamos la respuestas del sistema con carga de posición y velocidad del elevador, utilizando la funciones de transferencia que toman en cuenta el numero de personas ($p$), y variamos este desde 0 hasta 10, siento este el numero máximo de pasajeros permitido.
+
+
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.68]{vella.png}}
+	\caption{Diagrama de posición del elevador en lazo abierto}
+	\label{fig}
+\end{figure}
+
+Por medio del siguiente código de Matlab, graficamos la respuesta del diagrama de la figura (13), variando el valor de p (Cantidad de personas), con una estructura de repetición for.
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.85]{code5.png}}
+	\caption{Código posición del elevador con iteración de cantidad de personas en lazo abierto.}
+	\label{fig}
+\end{figure}
+
+Obteniendo como respuesta la siguiente grafica step en la figura (15):
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.73]{poscargla.png}}
+	\caption{Respuesta a escalón de posición del elevador en lazo abierto, variando la carga (p).}
+	\label{fig}
+\end{figure}
+
+En la figura (15) podemos ver como el tiempo de asentamiento aumenta a medida que la carga se incrementa, al igual que el error en estado estable de la rampa.
+
+Ahora analizamos la respuesta de la velocidad del elevador en lazo abierto, a partir de la ecuación (53).
+
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.48]{posla.png}}
+	\caption{Diagrama de velocidad del elevador en lazo abierto}
+	\label{fig}
+\end{figure}
+
+De igual forma que con el diagrama de posición, se establece un código de matlab que itere el valor de p, en la función de transferencia y grafique la respuesta, como se puede ver en la figura (17):
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.85]{code4.png}}
+	\caption{Código velocidad del elevador con iteración de cantidad de personas en lazo abierto.}
+	\label{fig}
+\end{figure}
+
+Y obteniendo como resultado la siguiente respuesta step en la figura (18):
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.64]{velcargla.png}}
+	\caption{Respuesta a escalón de velocidad del elevador en lazo abierto, variando la carga (p).}
+	\label{fig}
+\end{figure}
+
+De esta gráfica de igual modo podemos ver como el tiempo de asentamiento se va incrementando a medida que se aumenta la carga.
+
+De estas dos gráficas de la respuesta en lazo abierto podemos analizar, que la velocidad del elevador se incrementa rápidamente, de manera decreciente hasta alcanzar un valor estable constante, mientras que la posición incrementa de manera creciente hasta que llega a un valor de incremento lineal, ambas respuestas tardan mas en llegar a su estado constante y lineal respectivo, a medida que se incrementa la carga. 
+
+\subsection{Análisis de estabilidad de la respuesta en lazo cerrado con sensor ideal}
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.55]{feedback.png}}
+	\caption{Lazo cerrado de posición del elevador en lazo abierto, variando la carga (p) con sensor ideal.}
+	\label{fig}
+\end{figure}
+
+Resolviendo la retroalimentación anterior obtenemos:
+
+ \begin{equation}
+\dfrac{X_{el}(s)}{E_{a}(s)}=G(s)=\dfrac{\dfrac{0.075935}{p+10.8015}}{s\cdot \left(s+\dfrac{4.04928}{p+10.8015} \right) } \label{eq}
+\end{equation}
+
+\begin{equation}
+H(s)=\dfrac{G(s)}{1+G(s)}\label{eq}
+\end{equation}
+
+\begin{equation}
+H(s)=\dfrac{0.075935}{s^2\cdot\left(p+10.8015 \right) +4.04928\cdot s + 0.075935 }\label{eq}
+\end{equation}
+
+Analizamos el sistema por medio del metodo de Routh Hurwitz, en los casos extremos para determinar si el sistema es estable con o sin carga en lazo cerrado
+
+Primero asumiendo que $p=0$, para tener la función de transferencia del elevador vació
+
+\begin{equation}
+H(s)=\dfrac{0.006845}{s^2 +0.37488\cdot s + 0.00703 }\label{eq}
+\end{equation}
+
+Ahora generamos la tabla del método de Routh Hurwitz respectiva para función de transferencia de la ecuación (57)
+
+\begin{table}[htbp]
+	\caption{Tabla de Routh Hurwitz sin carga}
+	\begin{center}
+		\begin{tabular}{| c | c | c | c |}
+			\hline
+			$s^{2}$ & $1$ & $0.00703$  & $+$  \\ \hline
+			$s^{1}$ & $0.37488$ & $0$  & $+$  \\ \hline
+			$s^{0}$ & $0.00703$ & $0$  & $+$  \\ \hline
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+Ya que todos los términos de la primera columna son positivos, podemos concluir que la función de transferencia de posición del elevador en lazo cerrado sin carga es estable.
+
+Ahora a partir de la ecuación (56), calculamos la carga máxima del sistema, haciendo que $p = 10$, obteniendo la siguiente función de transferencia
+
+\begin{equation}
+H(s)=\dfrac{0.003554}{s^2 +0.19466\cdot s + 0.00365 }\label{eq}
+\end{equation}
+
+
+Creando la tabla a partir de los coeficientes del denominador de la función de transferencia de la ecuación (58)
+
+\begin{table}[htbp]
+	\caption{Tabla de Routh Hurwitz con carga máxima}
+	\begin{center}
+		\begin{tabular}{| c | c | c | c |}
+			\hline
+			$s^{2}$ & $1$ & $0.00365$  & $+$  \\ \hline
+			$s^{1}$ & $0.19466$ & $0$  & $+$  \\ \hline
+			$s^{0}$ & $0.00365$ & $0$  & $+$  \\ \hline
+		\end{tabular}
+		\label{tab1}
+	\end{center}
+\end{table}
+
+De modo que podemos concluir que la estabilidad del sistema en lazo cerrado no depende de la carga del elevador y este es estable.
+
+\subsection{Diseño del controlador}
+
+Se desea crear un controlador que permita adaptarse a las necesidades del sistema, este según los requisitos que se encuentran en el planteamiento del problema, se desea que el elevador llegue hasta el primer piso en 5 segundos, sabiendo que cada piso tiene una altura de 3 metros, con una carga de 6 personas.
+
+Si reemplazamos el valor de la cantidad de personas $p = 6$ en la función de transferencia de la ecuación (52), obtenemos
+
+ \begin{equation}
+\frac{X_{el}(s)}{E_{a}(s)} = \frac{0.00452} {s\cdot\left( s +  0.241007  \right)  }
+\label{eq}
+\end{equation}
+
+Si aplicamos la entrada de 420 Voltios dada en los datos, obtenemos la salida de la función de transferencia:
+
+ \begin{equation}
+X_{el}(s) = \frac{1.89821} {s\cdot\left( s +  0.241007  \right)  }
+\label{eq}
+\end{equation}
+
+Ahora analizamos el sistema en lazo cerrado, de la siguiente forma:
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.45]{poslap6.png}}
+	\caption{Diagrama de lazo cerrado con carga de seis personas.}
+	\label{fig}
+\end{figure}
+
+De este sistema en lazo cerrado calculamos el lugar geométrico de las raíces de la función de transferencia de la ecuación (60).
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.55]{lgr1.png}}
+	\caption{Lugar geométrico de las raíces del sistema con carga de seis personas.}
+	\label{fig}
+\end{figure}
+
+Como podemos ver en la figura (21), el lugar geométrico de la función de transferencia (60), muestra dos polos sobre el eje real, uno en s = 0, y otro en el SPI. Como no hay ceros y hay dos polos, hay dos asíntotas, una a 90° y otra a 270°.
+
+Para calcular un controlador para este sistema, requerimos que el maximo sobrepaso se lo mas pequeño posible, por lo que partimos de eso como parámetro de diseño
+
+ \begin{equation}
+\textdiscount OS = 1
+\label{eq}
+\end{equation}
+
+Si el maximo sobrepaso es 1, podemos calcular el factor de amortiguamiento a partir de este dato con la siguiente ecuación:
+
+ \begin{equation}
+\textdiscount OS = 100\cdot e^{\dfrac{-\pi\cdot\xi}{\sqrt{1-\xi^{2}}}}
+\label{eq}
+\end{equation}
+
+\begin{equation}
+\xi = 0.826085\label{eq}
+\end{equation}
+
+Otro parametro de diseño nos establece que se debe alcanzar el primer piso en 5 segundos, por lo que fijamos nuestro tiempo de asentamiento a 5 segundos, pero recordando que el tiempo de asentamiento es lo que le toma a la respuesta en llegar hasta el 98 por ciento del valor final, por lo que establecemos este tiempo al 98 por ciento de 5:
+
+\begin{equation}
+T_{s} = 5\cdot0.98 = 4.9\label{eq}
+\end{equation}
+
+\begin{equation}
+T_{s} = \dfrac{4}{\xi\cdot W_{n}}\label{eq}
+\end{equation}
+
+\begin{equation}
+W_{n} = 0.988187\label{eq}
+\end{equation}
+
+A partir del factor de amortiguamiento y frecuencia natural($W_{n}$), podemos calcular la frecuencia natural amortiguada($W_{d}$),
+
+\begin{equation}
+W_{d} = W_{n}\cdot\sqrt{1-\xi^{2}}\label{eq}
+\end{equation}
+
+\begin{equation}
+W_{d} = 0.55689\label{eq}
+\end{equation}
+
+De estos datos, podemos aproximar el valor de la frecuencia compleja $s$
+
+\begin{equation}
+s = -\xi\cdot W_{n}+W_{d}\cdot i \label{eq}
+\end{equation}
+
+\begin{equation}
+s = -0.816326+i\cdot 0.556888 \label{eq}
+\end{equation}
+
+Intentamos variar el tiempo de asentamiento, lo cual es un parámetro del estado transitorio de la respuesta, por lo que diseñaremos un derivador proporcional, ademas, como la respuesta es de tipo 1, no tiene error en estado estable, por lo cual no es necesario agregar un integrador. 
+
+Ahora calculamos el polinomio característico a partir de la función de transferencia (60), agregando un cero y una constante de proporcionalidad $k\cdot(s+z)$.
+
+ \begin{equation}
+k \left( s + z \right) \cdot 1.89821 + s\cdot\left( s +  0.241007  \right) = 0 
+\label{eq}
+\end{equation}
+
+Ahora reemplazando la ecuación (70) en (71) y resolviendo el sistema, separando las ecuaciones de parte imaginaria y parte real, quedando un sistema de dos ecuaciones con dos incógnitas,
+
+ \begin{equation}
+k = 0.733135 \label{eq}
+\end{equation}
+
+ \begin{equation}
+z = 0.701696\label{eq}
+\end{equation}
+
+Si reemplazamos estos dos valores dentro del controlador derivador proporcional que obtendremos las siguientes constantes:
+
+ \begin{equation}
+k\cdot \left( s + z\right) \label{eq}
+\end{equation}
+
+ \begin{equation}
+0.514438 + 0.733135 \cdot s \label{eq}
+\end{equation}
+
+Donde $0.514438$, es la constante de proporcionalidad y $0.733135$ es la constante de proporcionalidad derivativa
+
+Quedando como respuesta la función de transferencia con el controlador:
+
+ \begin{equation}
+X_{el}(s) = \frac{(0.514438)(1.89821)(s+0.733135)} {s\cdot\left( s +  0.241007  \right)}
+\label{eq}
+\end{equation}
+
+Ahora si graficamos esta respuesta mediante Simulink, en Matlab, utilizando el bloque de control 
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.6]{pd.png}}
+	\caption{Diagrama de lazo cerrado con carga de seis personas y controlador.}
+	\label{fig}
+\end{figure}
+
+Como aparece en la imagen, se utilizara el bloque de PID de Simulink, pero se dejara en cero la casilla de constante integral, ya que para esta planta, no es necesario agregar un integrador, ya que al ser de tipo 1, ya cuenta con un polo en cero, por lo que su error en estado estable es nulo.
+
+Si graficamos esta respuesta en simulink con una entrada step de valor unitario, que puede ser reemplazado por un escalón de valor 3 que representaria a los 3 metros de la altura del primer piso, obtenemos la siguiente respuesta
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.55]{simu.png}}
+	\caption{Respuesta del sistema con el controlador ante una señal escalón.}
+	\label{fig}
+\end{figure}
+
+El nuevo lugar geométrico de las raíces, del sistema con el controlador derivador proporcional (PD), es el siguiente:
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[scale=0.65]{lgr2.png}}
+	\caption{Lugar geométrico de las raíces de sistema con controlador incorporado.}
+	\label{fig}
+\end{figure}
+ 
+ Del nuevo lugar geométrico podemos analizar que el sistema, al agregar un cero del controlador derivador proporcional, cambiaron las secciones generando nuevos puntos de ruptura y al incrementar un cero, se redujo la cantidad de asíntotas, por lo que ahora solo existe una a 180°.
+ 
+ \section{Resultados}
+ 
+ Como pudimos ver en la sección anterior, se diseño un controlador que se adapta a las necesidades del proyecto, este llega al primer piso si se establece una entrada escalón con magnitud 3, que corresponden al primer piso, este tiene un ligero maximo sobrepaso, pero no pudo ser compensado ya que la respuesta por mas que se disminuyo este parámetro, al trabajar con un controlador PD, los valores de la respuesta transitoria pueden variar.
+ 
+ Ahora este maximo sobrepaso puede ser compensado con una cabina en la parte superior del edificio, en el cual pueda desplazarse libremente tomando en cuenta el maximo sobrepaso, esta cabina también puede cumplir la función de almacenar el sistema electromecánico y dejar suficiente espació para su mantenimiento.
+  
+ \section{Conclusiones}
+ 
+ La teoría de control tiene una amplia gama de aplicaciones, entre estas pudimos experimentar con una de muchas que nos permite tener un conocimiento profundizado al poder aplicar los conceptos teóricos en sistemas lo mas reales posibles, como el ruido en la toma experimental de datos, como analizar estos datos extraídos del campo, en este caso no directamente, pero dando una idea clara de como se aplican estos conceptos en el la industria. 
+ 
+ Se obtuvieron desde cero todos los parámetros necesarios para modelar un sistema de control, desde un sistema puramente físico, hasta crear un controlador que compensara o ayudara a aproximar una respuesta deseada.
+ 
+\begin{thebibliography}{00}
+	
+	\bibitem{b1} XYZ, D. (2015-2020). Concepto de Teoría del Control. Obtenido de https://www.definicion.xyz/2018/06/teoria-del-control.html
+	
+	\bibitem{b2}	Wikipedia. (29 de Mayo de 2020). Ascensor. Obtenido de https://es.wikipedia.org/wiki/Ascensor:~:text=Un20ascensor20o20elevador20es,conjunto20para20ponerlo20en0marcha.
+	
+	\bibitem{b3} Nise, N. S., ``Control systems engineering,'' Modeling in the
+	Frequency Domain, pp. 33--90, 2004.
+
+\end{thebibliography}
+
+
+
+
+\end{document}
